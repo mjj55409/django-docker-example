@@ -1,0 +1,39 @@
+version: "3"
+
+services:
+  redis:
+    image: redis:latest
+    container_name: rd01
+    ports:
+      - '6379:6379'
+
+  db:
+    image: postgres
+
+  django:
+    container_name: django_server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: docker_tutorial_django
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./dockerexample:/var/www/djangoproject
+    ports:
+      - "8000:8000"
+    links:
+      - db
+      - redis
+    depends_on:
+      - db
+      - celery
+
+  celery:
+    build: .
+    command: celery -A dockerexample worker -B --loglevel=DEBUG
+    volumes:
+      - ./dockerexample:/var/www/djangoproject
+    links:
+      - db
+      - redis
